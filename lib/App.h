@@ -1,3 +1,6 @@
+#include <iostream>
+#include <vector>
+
 #include <SFML/Config.hpp>
 #include <SFML/Graphics.hpp>
 #include <SFML/System.hpp>
@@ -21,12 +24,18 @@ class App {
         std::string windowTitle;
         sf::Event event;
         const int FPS = 30;
+        int mapWidth;
+        int mapHeight;
+        int** map;
 
         // ----- APP OBJECTS ----- //
 
         // ----- PRIVATE FUNCTIONS -----//
         void initVariables();
         void initWindow();
+        void initMap();
+
+        void drawMap();
 
     public:
         // ----- CONSTRUCTORS/DESTRUCTORS ----- //
