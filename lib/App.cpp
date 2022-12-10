@@ -14,7 +14,7 @@ void App::initWindow() {
         Initialize window - its size and framerate limit.
     */
     this->videoMode.width = 1280;
-    this->videoMode.height = 720;
+    this->videoMode.height = 256; // 720
 
     this->windowStyle = sf::Style::Titlebar | sf::Style::Close;
     this->windowTitle = "Mapeczka Tomeczka";
@@ -33,7 +33,7 @@ void App::initMap() {
     // std::cout << "Enter map height: ";
     // std::cin >> this->mapHeight;
     this->mapWidth = 80;
-    this->mapHeight = 15;
+    this->mapHeight = 16;
 
     this->map = new int*[this->mapHeight];
     for (int i = 0; i < this->mapHeight; i++) {
@@ -50,19 +50,40 @@ void App::drawMap() {
     */
     sf::RectangleShape tile;
     tile.setSize(sf::Vector2f(16.f, 16.f));
-    tile.setOutlineColor(sf::Color::Black);
-    tile.setOutlineThickness(1.f);
+    // tile.setOutlineColor(sf::Color::Black);
+    // tile.setOutlineThickness(1.f);
     for (int y = 0; y < this->mapHeight; y++) {
         for (int x = 0; x < this->mapWidth; x++) {
             if (this->map[y][x] == 0) {  // empty
                 tile.setFillColor(sf::Color::Cyan);
             } else if (this->map[y][x] == 1) { // dirt
-                tile.setFillColor(sf::Color(234, 221, 202));
+                tile.setFillColor(sf::Color(210, 105, 30));
             } else if (this->map[y][x] == 2) { // grass
                 tile.setFillColor(sf::Color::Green);
             }
             tile.setPosition(x * 16, y * 16);
             this->window->draw(tile);
+        }
+    }
+}
+
+void App::generateTerrain() {
+    /*
+        Generate terrain using Perlin noise.
+    */
+    const siv::PerlinNoise::seed_type seed = time(NULL);
+    const siv::PerlinNoise perlin{seed};
+
+    float smoothness = 0.2;
+    int heightDiff = 6;
+    for (int y = 0; y < this->mapHeight; y++) {
+        for (int x = 0; x < this->mapWidth; x++) {
+            const double height = int(perlin.noise1D((x * smoothness)) * heightDiff);
+            if (y > 8 - height) {
+                map[y][x] = 1;
+            } else if (y == 8 - height) {
+                map[y][x] = 2;
+            }
         }
     }
 }
@@ -75,6 +96,7 @@ App::App() {
     */
     this->initVariables();
     this->initMap();
+    this->generateTerrain();
     this->initWindow();
 }
 

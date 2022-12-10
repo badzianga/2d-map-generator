@@ -1,5 +1,5 @@
 #include <iostream>
-#include <vector>
+#include <ctime>
 
 #include <SFML/Config.hpp>
 #include <SFML/Graphics.hpp>
@@ -12,7 +12,7 @@
 #define APP_H
 
 /*
-    Main App class. It has everything related to app.
+    Main App class.
 */
 
 class App {
@@ -36,6 +36,7 @@ class App {
         void initMap();
 
         void drawMap();
+        void generateTerrain();
 
     public:
         // ----- CONSTRUCTORS/DESTRUCTORS ----- //
