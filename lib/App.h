@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdlib>
 #include <ctime>
 
 #include <SFML/Config.hpp>
@@ -24,9 +25,11 @@ class App {
         std::string windowTitle;
         sf::Event event;
         const int FPS = 30;
+        const int SCROLL_SPEED = 8;
         int mapWidth;
         int mapHeight;
         int** map;
+        sf::Vector2i scroll;
 
         // ----- APP OBJECTS ----- //
 

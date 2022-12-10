@@ -1,5 +1,11 @@
 #include "App.h"
 
+#define EMPTY 0
+#define DIRT 1
+#define GRASS 2
+#define STONE 3
+#define BEDROCK 4
+
 // ----- PRIVATE FUNCTIONS ----- //
 void App::initVariables() {
     /*
@@ -7,6 +13,9 @@ void App::initVariables() {
     */
     this->window = nullptr;
     this->map = nullptr;
+
+    this->scroll.x = 0;
+    this->scroll.y = 0;
 }
 
 void App::initWindow() {
@@ -14,7 +23,7 @@ void App::initWindow() {
         Initialize window - its size and framerate limit.
     */
     this->videoMode.width = 1280;
-    this->videoMode.height = 256; // 720
+    this->videoMode.height = 512;  // 720;
 
     this->windowStyle = sf::Style::Titlebar | sf::Style::Close;
     this->windowTitle = "Mapeczka Tomeczka";
@@ -32,14 +41,14 @@ void App::initMap() {
     // std::cin >> this->mapWidth;
     // std::cout << "Enter map height: ";
     // std::cin >> this->mapHeight;
-    this->mapWidth = 80;
-    this->mapHeight = 16;
+    this->mapWidth = 160;
+    this->mapHeight = 32;
 
     this->map = new int*[this->mapHeight];
     for (int i = 0; i < this->mapHeight; i++) {
         this->map[i] = new int[this->mapWidth];
         for (int j = 0; j < this->mapWidth; j++) {
-            this->map[i][j] = 0;
+            this->map[i][j] = EMPTY;
         }
     }
 }
@@ -54,14 +63,18 @@ void App::drawMap() {
     // tile.setOutlineThickness(1.f);
     for (int y = 0; y < this->mapHeight; y++) {
         for (int x = 0; x < this->mapWidth; x++) {
-            if (this->map[y][x] == 0) {  // empty
+            if (this->map[y][x] == EMPTY) {  // empty
                 tile.setFillColor(sf::Color::Cyan);
-            } else if (this->map[y][x] == 1) { // dirt
+            } else if (this->map[y][x] == DIRT) { // dirt
                 tile.setFillColor(sf::Color(210, 105, 30));
-            } else if (this->map[y][x] == 2) { // grass
+            } else if (this->map[y][x] == STONE) {  // stone
+                tile.setFillColor(sf::Color(128, 128, 128));
+            } else if (this->map[y][x] == BEDROCK) {
+                tile.setFillColor(sf::Color(64, 64, 64));
+            } else if (this->map[y][x] == GRASS) { // grass
                 tile.setFillColor(sf::Color::Green);
             }
-            tile.setPosition(x * 16, y * 16);
+            tile.setPosition(x * 16 - this->scroll.x, y * 16 - this->scroll.y);
             this->window->draw(tile);
         }
     }
@@ -79,10 +92,34 @@ void App::generateTerrain() {
     for (int y = 0; y < this->mapHeight; y++) {
         for (int x = 0; x < this->mapWidth; x++) {
             const double height = int(perlin.noise1D((x * smoothness)) * heightDiff);
-            if (y > 8 - height) {
-                map[y][x] = 1;
-            } else if (y == 8 - height) {
-                map[y][x] = 2;
+            if (y > this->mapHeight - 5) {  // bedrock and stone
+                if (y == this->mapHeight - 4) {
+                    if (std::rand() % 10 >= 8) {
+                        map[y][x] = BEDROCK;
+                    } else {
+                        map[y][x] = STONE;
+                    }
+                } else if (y == this->mapHeight - 3) {
+                    if (std::rand() % 10 >= 6) {
+                        map[y][x] = BEDROCK;
+                    } else {
+                        map[y][x] = STONE;
+                    }
+                } else if (y == this->mapHeight - 2) {
+                    if (std::rand() % 10 >= 4) {
+                        map[y][x] = BEDROCK;
+                    } else {
+                        map[y][x] = STONE;
+                    }
+                } else {  // bottom of the world
+                    map[y][x] = BEDROCK;
+                }
+            } else if (y > 12 - height) { // stone
+                map[y][x] = STONE;
+            } else if (y > 8 - height) {  // dirt
+                map[y][x] = DIRT;
+            } else if (y == 8 - height) {  // grass
+                map[y][x] = GRASS;
             }
         }
     }
@@ -124,20 +161,30 @@ void App::pollEvents() {
         Iterate through events during frame and handle them.
     */
     while (this->window->pollEvent(this->event)) {
-        switch (this->event.type) {
-            // X button - close the app
-            case sf::Event::Closed:
+        // X button - close the app
+        if (this-> event.type == sf::Event::Closed) {
+            this->window->close();
+        }
+        if (this->event.type == sf::Event::KeyPressed) {
+            // escape key - close the app
+            if (this->event.key.code == sf::Keyboard::Escape) {
                 this->window->close();
-                break;
-            case sf::Event::KeyPressed:
-                // escape key - close the app
-                if (this->event.key.code == sf::Keyboard::Escape) {
-                    this->window->close();
-                    break;
-                }
-            default:
-                break;
             }
+
+            // left/right camera movement
+            if (this->event.key.code == sf::Keyboard::Left) {
+                this->scroll.x -= this->SCROLL_SPEED;
+            } else if (this->event.key.code == sf::Keyboard::Right) {
+                this->scroll.x += this->SCROLL_SPEED;
+            }
+
+            // up/down camera movement
+            if (this->event.key.code == sf::Keyboard::Up) {
+                this->scroll.y -= this->SCROLL_SPEED;
+            } else if (this->event.key.code == sf::Keyboard::Down) {
+                this->scroll.y += this->SCROLL_SPEED;
+            }
+        }
     }
 }
 
