@@ -162,27 +162,11 @@ void App::generateTerrain() {
     for (int y = 0; y < this->mapHeight; y++) {
         for (int x = 0; x < this->mapWidth; x++) {
             const double height = int(perlin.noise1D((x * smoothness)) * heightDiff);
-            if (y > this->mapHeight - 5) {  // bedrock and stone
-                if (y == this->mapHeight - 4) {
-                    if (std::rand() % 10 >= 8) {
-                        map[y][x] = BEDROCK;
-                    } else {
-                        map[y][x] = STONE;
-                    }
-                } else if (y == this->mapHeight - 3) {
-                    if (std::rand() % 10 >= 6) {
-                        map[y][x] = BEDROCK;
-                    } else {
-                        map[y][x] = STONE;
-                    }
-                } else if (y == this->mapHeight - 2) {
-                    if (std::rand() % 10 >= 4) {
-                        map[y][x] = BEDROCK;
-                    } else {
-                        map[y][x] = STONE;
-                    }
-                } else {  // bottom of the world
+            if (y > this->mapHeight - 6) {  // bedrock and stone
+                if (rand() % 10 >= (2 * (mapHeight - y - 1))) {
                     map[y][x] = BEDROCK;
+                } else {
+                    map[y][x] = STONE;
                 }
             } else if (y > 12 - height) { // stone
                 map[y][x] = STONE;
@@ -203,8 +187,10 @@ void App::generateTerrain() {
 // ----- CONSTRUCTORS/DESTRUCTORS ----- //
 App::App() {
     /*
-        Call all init functions.
+        Call all init functions, start randomization.
     */
+    srand(time(NULL));
+
     this->initVariables();
     this->initFont();
     this->initSprites();
