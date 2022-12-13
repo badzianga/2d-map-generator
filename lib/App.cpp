@@ -132,14 +132,31 @@ void App::drawMap() {
     /*
         Iterate through array and draw correspond tiles on the window.
     */
-    for (int y = 0; y < this->mapHeight; y++) {
-        for (int x = 0; x < this->mapWidth; x++) {
+    int counter = 0;
+    // for (int y = 0; y < this->mapHeight; y++) {
+    //     for (int x = 0; x < this->mapWidth; x++) {
+    //         if (this->map[y][x] != EMPTY) {
+    //             this->blocks[map[y][x]].setPosition(x * TILE_SIZE - this->scroll.x, y * TILE_SIZE - this->scroll.y);
+    //             this->window->draw(this->blocks[map[y][x]]);
+    //             counter++;
+    //         }
+    //     }
+    // }
+    int renderLimitX = ((this->scroll.x + this->videoMode.width * 0.7) / TILE_SIZE) + this->scroll.x / SCROLL_SPEED % 2;
+    int renderLimitY = ((this->scroll.y + this->videoMode.height) / TILE_SIZE) + this->scroll.y / SCROLL_SPEED % 2;
+    // std::cout << "x limits: " << this->scroll.x / TILE_SIZE << ' ' << renderLimitX << '\n';
+    // std::cout << "y limits: " << this->scroll.y / TILE_SIZE << ' ' << renderLimitY << "\n\n";
+
+    for (int y = this->scroll.y / TILE_SIZE; y < renderLimitY; y++) {
+        for (int x = this->scroll.x / TILE_SIZE; x < renderLimitX; x++) {
             if (this->map[y][x] != EMPTY) {
                 this->blocks[map[y][x]].setPosition(x * TILE_SIZE - this->scroll.x, y * TILE_SIZE - this->scroll.y);
                 this->window->draw(this->blocks[map[y][x]]);
+                counter++;
             }
         }
     }
+    std::cout << "Tiles drawn: " << counter << '\n';
 }
 
 void App::drawPanel() {
@@ -147,7 +164,6 @@ void App::drawPanel() {
         Draw panel with texts, input fields and buttons.
     */
     this->window->draw(this->panelRect);
-
 }
 
 void App::generateTerrain() {
