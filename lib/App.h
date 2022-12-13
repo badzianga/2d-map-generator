@@ -1,12 +1,12 @@
-#include <iostream>
 #include <cstdlib>
 #include <ctime>
+#include <iostream>
+#include <map>
 
 #include <SFML/Config.hpp>
 #include <SFML/Graphics.hpp>
 #include <SFML/System.hpp>
 #include <SFML/Window.hpp>
-#include <map>
 
 #include "PerlinNoise.hpp"
 
@@ -35,6 +35,8 @@ class App {
         std::map<std::string, bool> inputs;
         sf::RectangleShape panelRect;
         sf::Font font;
+        std::map<int, sf::Texture> textures;
+        std::map<int, sf::Sprite> blocks;
 
         // ----- APP OBJECTS ----- //
 
@@ -42,6 +44,7 @@ class App {
         void initVariables();
         void initWindow();
         void initFont();
+        void initSprites();
         void initPanel();
         void initMap();
 
@@ -62,7 +65,6 @@ class App {
         void pollEvents();
         void update();
         void render();
-    
 };
 
 #endif

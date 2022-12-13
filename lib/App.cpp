@@ -8,6 +8,7 @@
 #define GRASS 2
 #define STONE 3
 #define BEDROCK 4
+#define DANDELION 5
 
 // ----- PRIVATE FUNCTIONS ----- //
 void App::initVariables() {
@@ -56,6 +57,25 @@ void App::initFont() {
     if (!this->font.loadFromFile("fonts/Minecraft.ttf")) {
         std::cout << "Cannot load Minecraft.ttf font! Exiting...\n";
         exit(-1);
+    }
+}
+
+void App::initSprites() {
+    /*
+        Load all textures from the folder and create sprites.
+    */
+    std::string images[] = {"dirt", "grass", "stone", "bedrock", "dandelion"};
+    int index = 1;
+
+    // load textures from directory and save them as sprites in map
+    for (std::string image : images) {
+        if (!this->textures[index].loadFromFile("sprites/" + image + ".png")) {
+            std::cout << "Cannot load " << image << ".png. Exiting...\n";
+            exit(-1);
+        }
+        this->blocks[index].setTexture(this->textures[index]);
+        this->blocks[index].setScale(0.1, 0.1);
+        index++;
     }
 }
 
@@ -112,25 +132,12 @@ void App::drawMap() {
     /*
         Iterate through array and draw correspond tiles on the window.
     */
-    sf::RectangleShape tile;
-    tile.setSize(sf::Vector2f(TILE_SIZE_F, TILE_SIZE_F));
-    // tile.setOutlineColor(sf::Color::Black);
-    // tile.setOutlineThickness(1.f);
     for (int y = 0; y < this->mapHeight; y++) {
         for (int x = 0; x < this->mapWidth; x++) {
-            if (this->map[y][x] == EMPTY) {  // empty
-                tile.setFillColor(sf::Color::Cyan);
-            } else if (this->map[y][x] == DIRT) { // dirt
-                tile.setFillColor(sf::Color(210, 105, 30));
-            } else if (this->map[y][x] == STONE) {  // stone
-                tile.setFillColor(sf::Color(128, 128, 128));
-            } else if (this->map[y][x] == BEDROCK) {
-                tile.setFillColor(sf::Color(64, 64, 64));
-            } else if (this->map[y][x] == GRASS) { // grass
-                tile.setFillColor(sf::Color::Green);
+            if (this->map[y][x] != EMPTY) {
+                this->blocks[map[y][x]].setPosition(x * TILE_SIZE - this->scroll.x, y * TILE_SIZE - this->scroll.y);
+                this->window->draw(this->blocks[map[y][x]]);
             }
-            tile.setPosition(x * TILE_SIZE - this->scroll.x, y * TILE_SIZE - this->scroll.y);
-            this->window->draw(tile);
         }
     }
 }
@@ -183,6 +190,10 @@ void App::generateTerrain() {
                 map[y][x] = DIRT;
             } else if (y == 8 - height) {  // grass
                 map[y][x] = GRASS;
+            } else if (y == 8 - height - 1) {
+                if (rand() % 10 == 0) {
+                    map[y][x] = DANDELION;
+                }
             }
         }
     }
@@ -196,8 +207,9 @@ App::App() {
     */
     this->initVariables();
     this->initFont();
+    this->initSprites();
     this->initMap();
-    this->generateTerrain();
+    this->generateTerrain();  // TODO: move this
     this->initWindow();
     this->initPanel();
 }
@@ -308,7 +320,7 @@ void App::render() {
     /*
         Clear old frame, render all objects and display them on current frame.
     */
-    this->window->clear();
+    this->window->clear(sf::Color::Cyan);
 
     this->drawMap();
 
