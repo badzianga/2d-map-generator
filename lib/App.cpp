@@ -49,6 +49,26 @@ void App::initWindow() {
     this->window->setPosition(sf::Vector2i(desktop.width / 2 - this->videoMode.width / 2, desktop.height / 2 - this->videoMode.height / 2));
 }
 
+void App::initFont() {
+    /*
+        Initialize font - load it from file. If error occurs, the app is terminated.
+    */
+    if (!this->font.loadFromFile("fonts/Minecraft.ttf")) {
+        std::cout << "Cannot load Minecraft.ttf font! Exiting...\n";
+        exit(-1);
+    }
+}
+
+void App::initPanel() {
+
+    // configure panel rect
+    this->panelRect.setSize(sf::Vector2f(float(this->videoMode.width * 0.3), float(this->videoMode.height)));
+    this->panelRect.setPosition(float(this->videoMode.width * 0.7), 0.f);
+    this->panelRect.setFillColor(sf::Color(34, 37, 44));
+
+    // configure labels
+}
+
 void App::initMap() {
     /*
         Initialize map - 2D array filled with zeros.
@@ -115,6 +135,14 @@ void App::drawMap() {
     }
 }
 
+void App::drawPanel() {
+    /*
+        Draw panel with texts, input fields and buttons.
+    */
+    this->window->draw(this->panelRect);
+
+}
+
 void App::generateTerrain() {
     /*
         Generate terrain using Perlin noise.
@@ -167,9 +195,11 @@ App::App() {
         Call all init functions.
     */
     this->initVariables();
+    this->initFont();
     this->initMap();
     this->generateTerrain();
     this->initWindow();
+    this->initPanel();
 }
 
 App::~App() {
@@ -280,11 +310,13 @@ void App::render() {
     */
     this->window->clear();
 
-    // draw objects
     this->drawMap();
+
     if (this->toggleGrid) {
         this->drawGrid();
     }
+
+    this->drawPanel();
 
     this->window->display();
 }

@@ -33,16 +33,21 @@ class App {
         sf::Vector2i scroll;
         bool toggleGrid;
         std::map<std::string, bool> inputs;
+        sf::RectangleShape panelRect;
+        sf::Font font;
 
         // ----- APP OBJECTS ----- //
 
         // ----- PRIVATE FUNCTIONS -----//
         void initVariables();
         void initWindow();
+        void initFont();
+        void initPanel();
         void initMap();
 
         void drawMap();
         void drawGrid();
+        void drawPanel();
         void generateTerrain();
 
     public:
