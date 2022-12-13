@@ -6,6 +6,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/System.hpp>
 #include <SFML/Window.hpp>
+#include <map>
 
 #include "PerlinNoise.hpp"
 
@@ -30,6 +31,8 @@ class App {
         int mapHeight;
         int** map;
         sf::Vector2i scroll;
+        bool toggleGrid;
+        std::map<std::string, bool> inputs;
 
         // ----- APP OBJECTS ----- //
 
@@ -39,6 +42,7 @@ class App {
         void initMap();
 
         void drawMap();
+        void drawGrid();
         void generateTerrain();
 
     public:

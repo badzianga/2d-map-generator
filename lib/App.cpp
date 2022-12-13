@@ -1,4 +1,8 @@
 #include "App.h"
+#include <SFML/Window/Keyboard.hpp>
+
+#define TILE_SIZE 16
+#define TILE_SIZE_F 16.f
 
 #define EMPTY 0
 #define DIRT 1
@@ -16,6 +20,13 @@ void App::initVariables() {
 
     this->scroll.x = 0;
     this->scroll.y = 0;
+
+    this->toggleGrid = true;
+
+    this->inputs["up"] = false;
+    this->inputs["down"] = false;
+    this->inputs["left"] = false;
+    this->inputs["right"] = false;
 }
 
 void App::initWindow() {
@@ -53,12 +64,32 @@ void App::initMap() {
     }
 }
 
+void App::drawGrid() {
+    /*
+        Draw help grid.
+    */
+    sf::RectangleShape line(sf::Vector2f(1.f, this->videoMode.height));
+    line.setFillColor(sf::Color(192, 192, 192));
+    // draw vertical lines
+    for (int x = 0; x < this->mapWidth; x++) {
+        line.setPosition(x * TILE_SIZE - this->scroll.x, 0.f);
+        this->window->draw(line);
+    }
+
+    line.setSize(sf::Vector2f(this->videoMode.width, 1.f));
+    // draw horizontal lines
+    for (int y = 0; y < this->mapHeight; y++) {
+        line.setPosition(0.f, y * TILE_SIZE - this->scroll.y);
+        this->window->draw(line);
+    }
+}
+
 void App::drawMap() {
     /*
         Iterate through array and draw correspond tiles on the window.
     */
     sf::RectangleShape tile;
-    tile.setSize(sf::Vector2f(16.f, 16.f));
+    tile.setSize(sf::Vector2f(TILE_SIZE_F, TILE_SIZE_F));
     // tile.setOutlineColor(sf::Color::Black);
     // tile.setOutlineThickness(1.f);
     for (int y = 0; y < this->mapHeight; y++) {
@@ -74,7 +105,7 @@ void App::drawMap() {
             } else if (this->map[y][x] == GRASS) { // grass
                 tile.setFillColor(sf::Color::Green);
             }
-            tile.setPosition(x * 16 - this->scroll.x, y * 16 - this->scroll.y);
+            tile.setPosition(x * TILE_SIZE - this->scroll.x, y * TILE_SIZE - this->scroll.y);
             this->window->draw(tile);
         }
     }
@@ -171,18 +202,41 @@ void App::pollEvents() {
                 this->window->close();
             }
 
+            if (this->event.key.code == sf::Keyboard::F12) {
+                this->toggleGrid = !this->toggleGrid;
+            }
+
             // left/right camera movement
             if (this->event.key.code == sf::Keyboard::Left) {
-                this->scroll.x -= this->SCROLL_SPEED;
-            } else if (this->event.key.code == sf::Keyboard::Right) {
-                this->scroll.x += this->SCROLL_SPEED;
+                this->inputs["left"] = true;
+            }
+            if (this->event.key.code == sf::Keyboard::Right) {
+                this->inputs["right"] = true;
             }
 
             // up/down camera movement
             if (this->event.key.code == sf::Keyboard::Up) {
-                this->scroll.y -= this->SCROLL_SPEED;
-            } else if (this->event.key.code == sf::Keyboard::Down) {
-                this->scroll.y += this->SCROLL_SPEED;
+                this->inputs["up"] = true;
+            }
+            if (this->event.key.code == sf::Keyboard::Down) {
+                this->inputs["down"] = true;
+            }
+        }
+        if (this->event.type == sf::Event::KeyReleased) {
+            // left/right camera movement
+            if (this->event.key.code == sf::Keyboard::Left) {
+                this->inputs["left"] = false;
+            }
+            if (this->event.key.code == sf::Keyboard::Right) {
+                this->inputs["right"] = false;
+            }
+
+            // up/down camera movement
+            if (this->event.key.code == sf::Keyboard::Up) {
+                this->inputs["up"] = false;
+            }
+            if (this->event.key.code == sf::Keyboard::Down) {
+                this->inputs["down"] = false;
             }
         }
     }
@@ -193,6 +247,26 @@ void App::update() {
         Handle events and update all things related to app.
     */
     this->pollEvents();
+
+    if (this->inputs["left"]) {
+        this->scroll.x -= SCROLL_SPEED;
+        if (this->scroll.x < 0) this->scroll.x = 0;
+    }
+    if (this->inputs["right"]) {
+        this->scroll.x += SCROLL_SPEED;
+        if (this->scroll.x > this->mapWidth * TILE_SIZE - this->videoMode.width)
+            this->scroll.x = this->mapWidth * TILE_SIZE - this->videoMode.width;
+    }
+    if (this->inputs["up"]) {
+        this->scroll.y -= SCROLL_SPEED;
+        if (this->scroll.y < 0) this->scroll.y = 0;
+    }
+    if (this->inputs["down"]) {
+        this->scroll.y += SCROLL_SPEED;
+        if (this->scroll.y > this->mapHeight * TILE_SIZE - this->videoMode.height)
+            this->scroll.y = this->mapHeight * TILE_SIZE - this->videoMode.height;
+    }
+
 }
 
 void App::render() {
@@ -203,6 +277,9 @@ void App::render() {
 
     // draw objects
     this->drawMap();
+    if (this->toggleGrid) {
+        this->drawGrid();
+    }
 
     this->window->display();
 }
