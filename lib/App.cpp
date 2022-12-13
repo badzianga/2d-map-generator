@@ -1,5 +1,4 @@
 #include "App.h"
-#include <SFML/Window/Keyboard.hpp>
 
 #define TILE_SIZE 16
 #define TILE_SIZE_F 16.f
@@ -18,6 +17,9 @@ void App::initVariables() {
     this->window = nullptr;
     this->map = nullptr;
 
+    this->mapWidth = 160;
+    this->mapHeight = 64;
+
     this->scroll.x = 0;
     this->scroll.y = 0;
 
@@ -34,13 +36,17 @@ void App::initWindow() {
         Initialize window - its size and framerate limit.
     */
     this->videoMode.width = 1280;
-    this->videoMode.height = 512;  // 720;
+    this->videoMode.height = 720;
 
     this->windowStyle = sf::Style::Titlebar | sf::Style::Close;
     this->windowTitle = "Mapeczka Tomeczka";
 
     this->window = new sf::RenderWindow(this->videoMode, this->windowTitle, this->windowStyle);
     this->window->setFramerateLimit(this->FPS);
+
+    sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
+
+    this->window->setPosition(sf::Vector2i(desktop.width / 2 - this->videoMode.width / 2, desktop.height / 2 - this->videoMode.height / 2));
 }
 
 void App::initMap() {
@@ -52,8 +58,6 @@ void App::initMap() {
     // std::cin >> this->mapWidth;
     // std::cout << "Enter map height: ";
     // std::cin >> this->mapHeight;
-    this->mapWidth = 160;
-    this->mapHeight = 32;
 
     this->map = new int*[this->mapHeight];
     for (int i = 0; i < this->mapHeight; i++) {
@@ -202,6 +206,7 @@ void App::pollEvents() {
                 this->window->close();
             }
 
+            // F12 - toggling tile grid
             if (this->event.key.code == sf::Keyboard::F12) {
                 this->toggleGrid = !this->toggleGrid;
             }
