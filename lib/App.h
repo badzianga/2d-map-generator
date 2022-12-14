@@ -23,13 +23,14 @@ class App {
         sf::RenderWindow* window;
         sf::VideoMode videoMode;
         sf::Uint32 windowStyle;
-        std::string windowTitle;
         sf::Event event;
         const int FPS = 30;
         const int SCROLL_SPEED = 8;
+        const float PADDING = 16;
         int mapWidth;
         int mapHeight;
         int** map;
+        float panelPosX;
         sf::Vector2i scroll;
         bool toggleGrid;
         std::map<std::string, bool> inputs;
@@ -37,6 +38,7 @@ class App {
         sf::Font font;
         std::map<int, sf::Texture> textures;
         std::map<int, sf::Sprite> blocks;
+        std::vector<sf::Text> labels;
 
         // ----- APP OBJECTS ----- //
 

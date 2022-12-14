@@ -40,9 +40,8 @@ void App::initWindow() {
     this->videoMode.height = 720;
 
     this->windowStyle = sf::Style::Titlebar | sf::Style::Close;
-    this->windowTitle = "Mapeczka Tomeczka";
 
-    this->window = new sf::RenderWindow(this->videoMode, this->windowTitle, this->windowStyle);
+    this->window = new sf::RenderWindow(this->videoMode, "Mapeczka Tomeczka", this->windowStyle);
     this->window->setFramerateLimit(this->FPS);
 
     sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
@@ -62,7 +61,8 @@ void App::initFont() {
 
 void App::initSprites() {
     /*
-        Load all textures from the folder and create sprites.
+        Load all textures from the folder and create sprites. If pre-defined sprites
+        are not found, the app is terminated.
     */
     std::string images[] = {"dirt", "grass", "stone", "bedrock", "dandelion"};
     int index = 1;
@@ -80,13 +80,31 @@ void App::initSprites() {
 }
 
 void App::initPanel() {
-
+    /*
+        Initialize panel and all things related to it.
+    */
     // configure panel rect
+    this->panelPosX = this->videoMode.width * 0.7;
     this->panelRect.setSize(sf::Vector2f(float(this->videoMode.width * 0.3), float(this->videoMode.height)));
-    this->panelRect.setPosition(float(this->videoMode.width * 0.7), 0.f);
+    this->panelRect.setPosition(float(this->panelPosX), 0.f);
     this->panelRect.setFillColor(sf::Color(34, 37, 44));
 
     // configure labels
+    sf::Text label;
+    label.setFont(this->font);
+    label.setCharacterSize(24);
+    label.setFillColor(sf::Color::White);
+
+    std::string texts[] = {"Map width:", "Map height:", "Ground level:"};
+
+    int i = 0;
+    for (std::string text : texts) {
+        label.setString(text);
+        label.setPosition(panelPosX + PADDING, float(i * 24 + (i + 1) * PADDING));
+        this->labels.push_back(label);
+        i++;
+        
+    }
 }
 
 void App::initMap() {
@@ -94,11 +112,6 @@ void App::initMap() {
         Initialize map - 2D array filled with zeros.
         Size of the array is declared by user.
     */
-    // std::cout << "Enter map width: ";
-    // std::cin >> this->mapWidth;
-    // std::cout << "Enter map height: ";
-    // std::cin >> this->mapHeight;
-
     this->map = new int*[this->mapHeight];
     for (int i = 0; i < this->mapHeight; i++) {
         this->map[i] = new int[this->mapWidth];
@@ -156,14 +169,20 @@ void App::drawMap() {
             }
         }
     }
-    std::cout << "Tiles drawn: " << counter << '\n';
+    // std::cout << "Tiles drawn: " << counter << '\n';
 }
 
 void App::drawPanel() {
     /*
         Draw panel with texts, input fields and buttons.
     */
+    // panel
     this->window->draw(this->panelRect);
+
+    // labels
+    for (sf::Text label : this->labels) {
+        this->window->draw(label);
+    }
 }
 
 void App::generateTerrain() {
