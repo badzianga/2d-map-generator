@@ -1,4 +1,5 @@
 #include "App.h"
+#include <string>
 
 #define TILE_SIZE 16
 #define TILE_SIZE_F 16.f
@@ -17,6 +18,8 @@ void App::initVariables() {
     */
     this->window = nullptr;
     this->map = nullptr;
+    this->textbox1 = nullptr;
+    this->buttonGenerate = nullptr;
 
     this->mapWidth = 160;
     this->mapHeight = 64;
@@ -87,13 +90,15 @@ void App::initPanel() {
     this->panelPosX = this->videoMode.width * 0.7;
     this->panelRect.setSize(sf::Vector2f(float(this->videoMode.width * 0.3), float(this->videoMode.height)));
     this->panelRect.setPosition(float(this->panelPosX), 0.f);
-    this->panelRect.setFillColor(sf::Color(34, 37, 44));
+    this->panelRect.setFillColor(sf::Color(27, 29, 36));
 
     // configure labels
     sf::Text label;
     label.setFont(this->font);
     label.setCharacterSize(24);
     label.setFillColor(sf::Color::White);
+    label.setOutlineColor(sf::Color::Black);
+    label.setOutlineThickness(1.f);
 
     std::string texts[] = {"Map width:", "Map height:", "Ground level:"};
 
@@ -103,8 +108,16 @@ void App::initPanel() {
         label.setPosition(panelPosX + PADDING, float(i * 24 + (i + 1) * PADDING));
         this->labels.push_back(label);
         i++;
-        
     }
+
+    this->textbox1 = new Textbox(sf::Vector2f(96, 24), 24, true);
+    this->textbox1->setFont(this->font);
+    this->textbox1->setPosition(sf::Vector2f(panelPosX + 200.f, PADDING));
+    this->textbox1->setLimit(true, 5);
+    
+    this->buttonGenerate = new Button({144, 32}, "Generate", 24);
+    this->buttonGenerate->setFont(this->font);
+    this->buttonGenerate->setPosition({panelPosX + 102.f, 500});
 }
 
 void App::initMap() {
@@ -183,6 +196,9 @@ void App::drawPanel() {
     for (sf::Text label : this->labels) {
         this->window->draw(label);
     }
+
+    this->textbox1->drawTo(this->window);
+    this->buttonGenerate->drawTo(this->window);
 }
 
 void App::generateTerrain() {
@@ -218,6 +234,42 @@ void App::generateTerrain() {
     }
 }
 
+void App::exportToCSV() {
+    /*
+        Export map data to csv file with current date and time
+    */
+    std::ofstream file;
+    time_t now = time(0);
+    tm *ltm = localtime(&now);
+
+    // prepare date and time for filename
+    std::string year = std::to_string(1900 + ltm->tm_year);
+    std::string month = std::to_string(1 + ltm->tm_mon);
+    if (month.length() < 2) month = '0' + month;
+    std::string day = std::to_string(ltm->tm_mday);
+    if (day.length() < 2)   day = '0' + day;
+    std::string hour = std::to_string(ltm->tm_hour);
+    if (hour.length() < 2)  hour = '0' + hour;
+    std::string min = std::to_string(ltm->tm_min);
+    if (min.length() < 2)   min = '0' + min;
+    std::string sec = std::to_string(ltm->tm_sec);
+    if (sec.length() < 2)   sec = '0' + sec;
+
+    std::string filename = "terrain_" + year + '-' + month + '-' + day+ '_' + hour + ':' + min + ':' + sec + ".csv";
+
+    file.open("maps/" + filename);
+
+    for (int y = 0; y < mapHeight; y++) {
+        file << map[y][0];
+        for (int x = 1; x < mapWidth; x++) {
+            file << ',' << map[y][x];
+        }
+        file << '\n';
+    }
+
+    file.close();
+}
+
 
 // ----- CONSTRUCTORS/DESTRUCTORS ----- //
 App::App() {
@@ -241,6 +293,9 @@ App::~App() {
     */
     delete this->window;
     delete this->map;
+
+    delete this->textbox1;
+    delete this->buttonGenerate;
 }
 
 
@@ -305,6 +360,25 @@ void App::pollEvents() {
             }
             if (this->event.key.code == sf::Keyboard::Down) {
                 this->inputs["down"] = false;
+            }
+        }
+
+        if (this->event.type == sf::Event::TextEntered) {
+            this->textbox1->typedOn(this->event);
+        }
+
+        if (this->event.type == sf::Event::MouseMoved) {
+            if (this->buttonGenerate->isMouseOver(this->window)) {
+                this->buttonGenerate->setBgColor(sf::Color(56, 61, 73));
+            } else {
+                this->buttonGenerate->setBgColor(sf::Color(38, 42, 51));
+            }
+        }
+
+        if (this->event.type == sf::Event::MouseButtonPressed) {
+            if (buttonGenerate->isMouseOver(this->window)) {
+                this->exportToCSV();
+                std::cout << "Exported data to CSV file.\n";
             }
         }
     }

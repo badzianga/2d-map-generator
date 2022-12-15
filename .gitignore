@@ -1,3 +1,4 @@
 src/*.o
 src/map-generator
 TODO
+maps/*

@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <ctime>
+#include <fstream>
 #include <iostream>
 #include <map>
 
@@ -9,6 +10,8 @@
 #include <SFML/Window.hpp>
 
 #include "PerlinNoise.hpp"
+#include "Textbox.h"
+#include "Button.h"
 
 #ifndef APP_H
 #define APP_H
@@ -39,6 +42,8 @@ class App {
         std::map<int, sf::Texture> textures;
         std::map<int, sf::Sprite> blocks;
         std::vector<sf::Text> labels;
+        Textbox* textbox1;
+        Button* buttonGenerate;
 
         // ----- APP OBJECTS ----- //
 
@@ -54,6 +59,7 @@ class App {
         void drawGrid();
         void drawPanel();
         void generateTerrain();
+        void exportToCSV();
 
     public:
         // ----- CONSTRUCTORS/DESTRUCTORS ----- //
