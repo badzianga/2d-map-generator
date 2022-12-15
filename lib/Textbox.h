@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sstream>
+#include <string>
 #include <SFML/Graphics.hpp>
 
 #define DELETE_KEY 8
@@ -41,7 +42,7 @@ class Textbox {
         }
 
     public:
-        Textbox(sf::Vector2f boxSize, int charSize, bool selected) {
+        Textbox(sf::Vector2f boxSize, int charSize, bool selected, int defaultValue) {
             box.setSize(boxSize);
             box.setFillColor(sf::Color(49, 52, 65));
             box.setOutlineThickness(1.f);
@@ -50,7 +51,8 @@ class Textbox {
             textbox.setFillColor(sf::Color::White);
             textbox.setOutlineColor(sf::Color::Black);
             textbox.setOutlineThickness(1.f);
-            textbox.setString("0");
+            text.str(std::to_string(defaultValue));
+            textbox.setString(std::to_string(defaultValue));
             isSelected = selected;
             if (selected) {
                 box.setOutlineColor(sf::Color(51, 142, 203));

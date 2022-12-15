@@ -1,5 +1,4 @@
 #include "App.h"
-#include <string>
 
 #define TILE_SIZE 16
 #define TILE_SIZE_F 16.f
@@ -22,9 +21,13 @@ void App::initVariables() {
     this->buttonExport = nullptr;
     this->textboxMapWidth = nullptr;
     this->textboxMapHeight = nullptr;
+    this->textboxSmoothness = nullptr;
+    this->textboxHeightDiff = nullptr;
 
-    this->mapWidth = 160;
-    this->mapHeight = 64;
+    this->mapWidth = 80;
+    this->mapHeight = 46;
+    this->smoothness = 0.2;
+    this->heightDiff = 6;
 
     this->scroll.x = 0;
     this->scroll.y = 0;
@@ -102,7 +105,7 @@ void App::initPanel() {
     label.setOutlineColor(sf::Color::Black);
     label.setOutlineThickness(1.f);
 
-    std::string texts[] = {"Map width:", "Map height:", "Ground level:"};
+    std::string texts[] = {"Map width:", "Map height:", "Smoothness:", "Height diff:"};
     int i = 0;
     for (std::string text : texts) {
         label.setString(text);
@@ -112,15 +115,25 @@ void App::initPanel() {
     }
 
     // configure textboxes
-    this->textboxMapWidth = new Textbox(sf::Vector2f(96, 24), 24, false);
+    this->textboxMapWidth = new Textbox(sf::Vector2f(96, 24), 24, false, 80);
     this->textboxMapWidth->setFont(this->font);
-    this->textboxMapWidth->setLimit(true, 5);
+    this->textboxMapWidth->setLimit(true, 4);
     this->textboxMapWidth->setPosition(sf::Vector2f(panelPosX + 200.f, PADDING));
 
-    this->textboxMapHeight = new Textbox(sf::Vector2f(96, 24), 24, false);
+    this->textboxMapHeight = new Textbox(sf::Vector2f(96, 24), 24, false, 64);
     this->textboxMapHeight->setFont(this->font);
-    this->textboxMapHeight->setLimit(true, 5);
+    this->textboxMapHeight->setLimit(true, 4);
     this->textboxMapHeight->setPosition(sf::Vector2f(panelPosX + 200.f, 24 + 2 * PADDING));
+
+    this->textboxSmoothness = new Textbox(sf::Vector2f(96, 24), 24, false, 20);
+    this->textboxSmoothness->setFont(this->font);
+    this->textboxSmoothness->setLimit(true, 3);
+    this->textboxSmoothness->setPosition(sf::Vector2f(panelPosX + 200.f, 48 + 3 * PADDING));
+
+    this->textboxHeightDiff = new Textbox(sf::Vector2f(96, 24), 24, false, 6);
+    this->textboxHeightDiff->setFont(this->font);
+    this->textboxHeightDiff->setLimit(true, 2);
+    this->textboxHeightDiff->setPosition(sf::Vector2f(panelPosX + 200.f, 72 + 4 * PADDING));
 
     // configure buttons
     this->buttonGenerate = new Button({144, 32}, "Generate", 24, {0.f, -6.f});
@@ -132,11 +145,16 @@ void App::initPanel() {
     this->buttonExport->setPosition({panelPosX + 12.f * PADDING, float(this->videoMode.height - 3 * PADDING)});
 }
 
-void App::initMap() {
+void App::initMap(int width, int height, float smoothness, int heightDiff) {
     /*
         Initialize map - 2D array filled with zeros.
         Size of the array is declared by user.
     */
+    this->mapWidth = width;
+    this->mapHeight = height;
+    this->smoothness = smoothness;
+    this->heightDiff = heightDiff;
+
     this->map = new int*[this->mapHeight];
     for (int i = 0; i < this->mapHeight; i++) {
         this->map[i] = new int[this->mapWidth];
@@ -211,6 +229,8 @@ void App::drawPanel() {
 
     this->textboxMapWidth->drawTo(this->window);
     this->textboxMapHeight->drawTo(this->window);
+    this->textboxSmoothness->drawTo(this->window);
+    this->textboxHeightDiff->drawTo(this->window);
     this->buttonGenerate->drawTo(this->window);
     this->buttonExport->drawTo(this->window);
 }
@@ -230,11 +250,9 @@ void App::generateTerrain() {
     const siv::PerlinNoise::seed_type seed = rand() % 10 * time(NULL);
     const siv::PerlinNoise perlin{seed};
 
-    float smoothness = 0.2;
-    int heightDiff = 6;
     for (int y = 0; y < this->mapHeight; y++) {
         for (int x = 0; x < this->mapWidth; x++) {
-            const double height = int(perlin.noise1D((x * smoothness)) * heightDiff);
+            const double height = int(perlin.noise1D((x * this->smoothness)) * this->heightDiff);
             if (y > this->mapHeight - 6) {  // bedrock and stone
                 if (rand() % 10 >= (2 * (mapHeight - y - 1))) {
                     map[y][x] = BEDROCK;
@@ -303,7 +321,7 @@ App::App() {
     this->initVariables();
     this->initFont();
     this->initSprites();
-    this->initMap();
+    this->initMap(this->mapWidth, this->mapHeight, this->smoothness, this->heightDiff);
     this->initWindow();
     this->initPanel();
 }
@@ -317,6 +335,8 @@ App::~App() {
 
     delete this->textboxMapWidth;
     delete this->textboxMapHeight;
+    delete this->textboxSmoothness;
+    delete this->textboxHeightDiff;
 
     delete this->buttonGenerate;
     delete this->buttonExport;
@@ -389,7 +409,9 @@ void App::pollEvents() {
 
         if (this->event.type == sf::Event::TextEntered) {
             this->textboxMapWidth->typedOn(this->event);
-            textboxMapHeight->typedOn(this->event);
+            this->textboxMapHeight->typedOn(this->event);
+            this->textboxSmoothness->typedOn(this->event);
+            this->textboxHeightDiff->typedOn(this->event);
         }
 
         if (this->event.type == sf::Event::MouseMoved) {
@@ -416,14 +438,36 @@ void App::pollEvents() {
             } else {
                 this->textboxMapHeight->setSelected(false);
             }
+            if (this->textboxSmoothness->isMouseOver(this->window)) {
+                this->textboxSmoothness->setSelected(true);
+            } else {
+                this->textboxSmoothness->setSelected(false);
+            }
+            if (this->textboxHeightDiff->isMouseOver(this->window)) {
+                this->textboxHeightDiff->setSelected(true);
+            } else {
+                this->textboxHeightDiff->setSelected(false);
+            }
 
             if (buttonExport->isMouseOver(this->window)) {
                 this->exportToCSV();
                 std::cout << "Exported data to CSV file.\n";
             }
             if (buttonGenerate->isMouseOver(this->window)) {
-                resetTerrain();  // TEMP workaround
-                generateTerrain();
+                int width = std::stoi(this->textboxMapWidth->getText());
+                int height = std::stoi(this->textboxMapHeight->getText());
+                float smoothness = std::stof(this->textboxSmoothness->getText()) / 100.f;
+                int heightDiff = std::stoi(this->textboxHeightDiff->getText());
+                if (width <= 0 || height <= 0) {
+                    continue;
+                }
+
+                this->scroll.x = 0;
+                this->scroll.y = 0;
+
+                delete this->map;
+                this->initMap(width, height, smoothness, heightDiff);
+                this->generateTerrain();
             }
         }
     }

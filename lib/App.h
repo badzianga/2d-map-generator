@@ -3,15 +3,16 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <string>
 
 #include <SFML/Config.hpp>
 #include <SFML/Graphics.hpp>
 #include <SFML/System.hpp>
 #include <SFML/Window.hpp>
 
+#include "Button.h"
 #include "PerlinNoise.hpp"
 #include "Textbox.h"
-#include "Button.h"
 
 #ifndef APP_H
 #define APP_H
@@ -32,6 +33,8 @@ class App {
         const float PADDING = 16;
         int mapWidth;
         int mapHeight;
+        float smoothness;
+        int heightDiff;
         int** map;
         float panelPosX;
         sf::Vector2i scroll;
@@ -46,6 +49,8 @@ class App {
         Button* buttonExport;
         Textbox* textboxMapWidth;
         Textbox* textboxMapHeight;
+        Textbox* textboxSmoothness;
+        Textbox* textboxHeightDiff;
 
         // ----- APP OBJECTS ----- //
 
@@ -55,7 +60,7 @@ class App {
         void initFont();
         void initSprites();
         void initPanel();
-        void initMap();
+        void initMap(int, int, float, int);
 
         void drawMap();
         void drawGrid();
