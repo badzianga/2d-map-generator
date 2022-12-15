@@ -18,8 +18,8 @@ void App::initVariables() {
     */
     this->window = nullptr;
     this->map = nullptr;
-    this->textbox1 = nullptr;
     this->buttonGenerate = nullptr;
+    this->buttonExport = nullptr;
 
     this->mapWidth = 160;
     this->mapHeight = 64;
@@ -101,7 +101,6 @@ void App::initPanel() {
     label.setOutlineThickness(1.f);
 
     std::string texts[] = {"Map width:", "Map height:", "Ground level:"};
-
     int i = 0;
     for (std::string text : texts) {
         label.setString(text);
@@ -110,14 +109,20 @@ void App::initPanel() {
         i++;
     }
 
-    this->textbox1 = new Textbox(sf::Vector2f(96, 24), 24, true);
-    this->textbox1->setFont(this->font);
-    this->textbox1->setPosition(sf::Vector2f(panelPosX + 200.f, PADDING));
-    this->textbox1->setLimit(true, 5);
-    
-    this->buttonGenerate = new Button({144, 32}, "Generate", 24);
+    // configure textboxes
+    Textbox textbox(sf::Vector2f(96, 24), 24, false);
+    textbox.setFont(this->font);
+    textbox.setPosition(sf::Vector2f(panelPosX + 200.f, PADDING));
+    textbox.setLimit(true, 5);
+
+    // configure buttons
+    this->buttonGenerate = new Button({144, 32}, "Generate", 24, {0.f, -6.f});
     this->buttonGenerate->setFont(this->font);
-    this->buttonGenerate->setPosition({panelPosX + 102.f, 500});
+    this->buttonGenerate->setPosition({panelPosX + 2.F * PADDING, float(this->videoMode.height - 3 * PADDING)});
+
+    this->buttonExport = new Button({144, 32}, "Export", 24, {0.f, -4.f});
+    this->buttonExport->setFont(this->font);
+    this->buttonExport->setPosition({panelPosX + 12.f * PADDING, float(this->videoMode.height - 3 * PADDING)});
 }
 
 void App::initMap() {
@@ -197,15 +202,24 @@ void App::drawPanel() {
         this->window->draw(label);
     }
 
-    this->textbox1->drawTo(this->window);
+    // this->textbox1->drawTo(this->window);
     this->buttonGenerate->drawTo(this->window);
+    this->buttonExport->drawTo(this->window);
+}
+
+void App::resetTerrain() {
+    for (int y = 0; y < this->mapHeight; y++) {
+        for (int x = 0; x < this->mapWidth; x++) {
+            map[y][x] = 0;
+        }
+    }
 }
 
 void App::generateTerrain() {
     /*
         Generate terrain using Perlin noise.
     */
-    const siv::PerlinNoise::seed_type seed = time(NULL);
+    const siv::PerlinNoise::seed_type seed = rand() % 10 * time(NULL);
     const siv::PerlinNoise perlin{seed};
 
     float smoothness = 0.2;
@@ -294,8 +308,8 @@ App::~App() {
     delete this->window;
     delete this->map;
 
-    delete this->textbox1;
     delete this->buttonGenerate;
+    delete this->buttonExport;
 }
 
 
@@ -363,9 +377,10 @@ void App::pollEvents() {
             }
         }
 
-        if (this->event.type == sf::Event::TextEntered) {
-            this->textbox1->typedOn(this->event);
-        }
+        // TOOD
+        // if (this->event.type == sf::Event::TextEntered) {
+        //     this->textbox1->typedOn(this->event);
+        // }
 
         if (this->event.type == sf::Event::MouseMoved) {
             if (this->buttonGenerate->isMouseOver(this->window)) {
@@ -373,12 +388,21 @@ void App::pollEvents() {
             } else {
                 this->buttonGenerate->setBgColor(sf::Color(38, 42, 51));
             }
+            if (this->buttonExport->isMouseOver(this->window)) {
+                this->buttonExport->setBgColor(sf::Color(56, 61, 73));
+            } else {
+                this->buttonExport->setBgColor(sf::Color(38, 42, 51));
+            }
         }
 
         if (this->event.type == sf::Event::MouseButtonPressed) {
-            if (buttonGenerate->isMouseOver(this->window)) {
+            if (buttonExport->isMouseOver(this->window)) {
                 this->exportToCSV();
                 std::cout << "Exported data to CSV file.\n";
+            }
+            if (buttonGenerate->isMouseOver(this->window)) {
+                resetTerrain();  // TEMP workaround
+                generateTerrain();
             }
         }
     }

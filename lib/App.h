@@ -42,8 +42,9 @@ class App {
         std::map<int, sf::Texture> textures;
         std::map<int, sf::Sprite> blocks;
         std::vector<sf::Text> labels;
-        Textbox* textbox1;
+        std::vector<Textbox> textboxes;
         Button* buttonGenerate;
+        Button* buttonExport;
 
         // ----- APP OBJECTS ----- //
 
@@ -58,6 +59,7 @@ class App {
         void drawMap();
         void drawGrid();
         void drawPanel();
+        void resetTerrain();  // TEMP workaround
         void generateTerrain();
         void exportToCSV();
 

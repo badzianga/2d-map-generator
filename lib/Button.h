@@ -8,12 +8,13 @@
 class Button {
     public:
         Button() {  }
-        Button(sf::Vector2f buttonSize, std::string text, int charSize) {
+        Button(sf::Vector2f buttonSize, std::string text, int charSize, sf::Vector2f textFix) {
             this->text.setString(text);
             this->text.setFillColor(sf::Color::White);
             this->text.setOutlineColor(sf::Color::Black);
             this->text.setOutlineThickness(1.f);
             this->text.setCharacterSize(charSize);
+            this->textFix = textFix;
             button.setSize(buttonSize);
             button.setFillColor(sf::Color(38, 42, 51));
             button.setOutlineColor(sf::Color(20, 22, 27));
@@ -35,8 +36,8 @@ class Button {
         void setPosition(sf::Vector2f position) {
             button.setPosition(position);
 
-            float xPos = (position.x + button.getLocalBounds().width / 2) - (text.getLocalBounds().width / 2);
-            float yPos = (position.y + button.getLocalBounds().height / 2) - (text.getLocalBounds().height / 2) - 6;
+            float xPos = float(int((position.x + button.getLocalBounds().width / 2) - (text.getLocalBounds().width / 2) + textFix.x));
+            float yPos = float(int((position.y + button.getLocalBounds().height / 2) - (text.getLocalBounds().height / 2) + textFix.y));
             text.setPosition(sf::Vector2f(xPos, yPos));
         }
 
@@ -61,4 +62,5 @@ class Button {
     private:
         sf::RectangleShape button;
         sf::Text text;
+        sf::Vector2f textFix;
 };
