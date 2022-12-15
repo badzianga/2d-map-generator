@@ -20,6 +20,8 @@ void App::initVariables() {
     this->map = nullptr;
     this->buttonGenerate = nullptr;
     this->buttonExport = nullptr;
+    this->textboxMapWidth = nullptr;
+    this->textboxMapHeight = nullptr;
 
     this->mapWidth = 160;
     this->mapHeight = 64;
@@ -110,10 +112,15 @@ void App::initPanel() {
     }
 
     // configure textboxes
-    Textbox textbox(sf::Vector2f(96, 24), 24, false);
-    textbox.setFont(this->font);
-    textbox.setPosition(sf::Vector2f(panelPosX + 200.f, PADDING));
-    textbox.setLimit(true, 5);
+    this->textboxMapWidth = new Textbox(sf::Vector2f(96, 24), 24, false);
+    this->textboxMapWidth->setFont(this->font);
+    this->textboxMapWidth->setLimit(true, 5);
+    this->textboxMapWidth->setPosition(sf::Vector2f(panelPosX + 200.f, PADDING));
+
+    this->textboxMapHeight = new Textbox(sf::Vector2f(96, 24), 24, false);
+    this->textboxMapHeight->setFont(this->font);
+    this->textboxMapHeight->setLimit(true, 5);
+    this->textboxMapHeight->setPosition(sf::Vector2f(panelPosX + 200.f, 24 + 2 * PADDING));
 
     // configure buttons
     this->buttonGenerate = new Button({144, 32}, "Generate", 24, {0.f, -6.f});
@@ -202,7 +209,8 @@ void App::drawPanel() {
         this->window->draw(label);
     }
 
-    // this->textbox1->drawTo(this->window);
+    this->textboxMapWidth->drawTo(this->window);
+    this->textboxMapHeight->drawTo(this->window);
     this->buttonGenerate->drawTo(this->window);
     this->buttonExport->drawTo(this->window);
 }
@@ -296,17 +304,19 @@ App::App() {
     this->initFont();
     this->initSprites();
     this->initMap();
-    this->generateTerrain();  // TODO: move this
     this->initWindow();
     this->initPanel();
 }
 
 App::~App() {
     /*
-        Delete window and map to prevent memory leak.
+        Delete dynamically-declared variables to prevent memory leak.
     */
     delete this->window;
     delete this->map;
+
+    delete this->textboxMapWidth;
+    delete this->textboxMapHeight;
 
     delete this->buttonGenerate;
     delete this->buttonExport;
@@ -377,10 +387,10 @@ void App::pollEvents() {
             }
         }
 
-        // TOOD
-        // if (this->event.type == sf::Event::TextEntered) {
-        //     this->textbox1->typedOn(this->event);
-        // }
+        if (this->event.type == sf::Event::TextEntered) {
+            this->textboxMapWidth->typedOn(this->event);
+            textboxMapHeight->typedOn(this->event);
+        }
 
         if (this->event.type == sf::Event::MouseMoved) {
             if (this->buttonGenerate->isMouseOver(this->window)) {
@@ -396,6 +406,17 @@ void App::pollEvents() {
         }
 
         if (this->event.type == sf::Event::MouseButtonPressed) {
+            if (this->textboxMapWidth->isMouseOver(this->window)) {
+                this->textboxMapWidth->setSelected(true);
+            } else {
+                this->textboxMapWidth->setSelected(false);
+            }
+            if (this->textboxMapHeight->isMouseOver(this->window)) {
+                this->textboxMapHeight->setSelected(true);
+            } else {
+                this->textboxMapHeight->setSelected(false);
+            }
+
             if (buttonExport->isMouseOver(this->window)) {
                 this->exportToCSV();
                 std::cout << "Exported data to CSV file.\n";

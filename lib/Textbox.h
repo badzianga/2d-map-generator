@@ -1,7 +1,6 @@
 #pragma once
 
 #include <sstream>
-
 #include <SFML/Graphics.hpp>
 
 #define DELETE_KEY 8
@@ -26,7 +25,7 @@ class Textbox {
                     deleteLastChar();
                 }
             }
-            textbox.setString(text.str() + '_');
+            textbox.setString(text.str());
         }
 
         void deleteLastChar() {
@@ -51,12 +50,11 @@ class Textbox {
             textbox.setFillColor(sf::Color::White);
             textbox.setOutlineColor(sf::Color::Black);
             textbox.setOutlineThickness(1.f);
+            textbox.setString("0");
             isSelected = selected;
             if (selected) {
-                textbox.setString("_");
                 box.setOutlineColor(sf::Color(51, 142, 203));
             } else {
-                textbox.setString("");
                 box.setOutlineColor(sf::Color(22, 25, 31));
             }
         }
@@ -80,15 +78,9 @@ class Textbox {
 
         void setSelected(bool selected) {
             isSelected = selected;
-            if (selected) {
+            if (isSelected) {
                 box.setOutlineColor(sf::Color(51, 142, 203));
             } else {
-                std::string t = text.str();
-                std::string newText = "";
-                for (int i = 0; i < t.length() - 1; i++) {
-                    newText += t[i];
-                }
-                textbox.setString(newText);
                 box.setOutlineColor(sf::Color(22, 25, 31));
             }
         }
@@ -100,6 +92,19 @@ class Textbox {
         void drawTo(sf::RenderWindow *window) {
             window->draw(box);
             window->draw(textbox);
+        }
+
+        bool isMouseOver(sf::RenderWindow *window) {
+            int mouseX = sf::Mouse::getPosition(*window).x;
+            int mouseY = sf::Mouse::getPosition(*window).y;
+
+            float btnPosX = box.getPosition().x;
+            float btnPosY = box.getPosition().y;
+
+            float btnXPosWidth = box.getPosition().x + box.getLocalBounds().width;
+            float btnYPosHeight = box.getPosition().y + box.getLocalBounds().height;
+
+            return (mouseX <= btnXPosWidth && mouseX >= btnPosX && mouseY <= btnYPosHeight && mouseY >= btnPosY);
         }
 
         void typedOn(sf::Event input) {
@@ -114,7 +119,7 @@ class Textbox {
                             inputLogic(charTyped);
                         } else if (text.str().length() >= limit && charTyped == DELETE_KEY) {
                             deleteLastChar();
-                            textbox.setString(text.str() + '_');
+                            textbox.setString(text.str());
                         }
                     }
                     else {

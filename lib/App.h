@@ -42,9 +42,10 @@ class App {
         std::map<int, sf::Texture> textures;
         std::map<int, sf::Sprite> blocks;
         std::vector<sf::Text> labels;
-        std::vector<Textbox> textboxes;
         Button* buttonGenerate;
         Button* buttonExport;
+        Textbox* textboxMapWidth;
+        Textbox* textboxMapHeight;
 
         // ----- APP OBJECTS ----- //
 
