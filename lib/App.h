@@ -52,8 +52,6 @@ class App {
         Textbox* textboxSmoothness;
         Textbox* textboxHeightDiff;
 
-        // ----- APP OBJECTS ----- //
-
         // ----- PRIVATE FUNCTIONS -----//
         void initVariables();
         void initWindow();
