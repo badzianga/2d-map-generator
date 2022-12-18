@@ -11,7 +11,7 @@ class Caves {
         int mapHeight;
 
         // ----- PRIVATE FUNCTIONS ----- //
-        int countNeighbours(int, int);
+        int countNeighbours(int x, int y);
         void cellularAutomata();
         void switchStates();
 
@@ -21,6 +21,7 @@ class Caves {
         virtual ~Caves();
 
         // ----- FUNCTIONS ----- //
-        void initArray(int, int, int);
-        bool** generateCaves(int);
+        void initArray(int mapWidth, int mapHeght, int aliveProb);
+        void generateCaves(int generations);
+        bool getCell(int x, int y);
 };

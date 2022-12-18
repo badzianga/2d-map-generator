@@ -11,6 +11,7 @@
 #include <SFML/Window.hpp>
 
 #include "Button.h"
+#include "Caves.h"
 #include "PerlinNoise.hpp"
 #include "Textbox.h"
 
@@ -51,6 +52,9 @@ class App {
         Textbox* textboxMapHeight;
         Textbox* textboxSmoothness;
         Textbox* textboxHeightDiff;
+        Textbox* textboxAliveProb;
+        Textbox* textboxGenerations;
+        Caves* caves;
 
         // ----- PRIVATE FUNCTIONS -----//
         void initVariables();
@@ -58,12 +62,12 @@ class App {
         void initFont();
         void initSprites();
         void initPanel();
-        void initMap(int, int, float, int);
+        void initMap(int width, int height, float smoothness, int heightDiff);
+        void initCaves();
 
         void drawMap();
         void drawGrid();
         void drawPanel();
-        void resetTerrain();  // TEMP workaround
         void generateTerrain();
         void exportToCSV();
 

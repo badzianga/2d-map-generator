@@ -59,7 +59,9 @@ Caves::~Caves() {
 void Caves::initArray(int mapWidth, int mapHeight, int aliveProb) {
     /*
         Create an array with 0s and 1s randomly. Borders have value 0.
+        Bottom border has 6 rows of 0s.
     */
+    delete this->map;
     std::srand(time(NULL));
     this->mapWidth = mapWidth;
     this->mapHeight = mapHeight;
@@ -68,7 +70,7 @@ void Caves::initArray(int mapWidth, int mapHeight, int aliveProb) {
     for (int y = 0; y < mapHeight; y++) {
         this->map[y] = new bool[mapWidth];
         for (int x = 0; x < mapWidth; x++) {
-            if (y == 0 || x == 0 || y == mapHeight - 1 || x == mapWidth - 1) {
+            if (y == 0 || x == 0 || y >= mapHeight - 6 || x == mapWidth - 1) {
                 this->map[y][x] = DEAD;
             } else if (rand() % 100 <= aliveProb) {
                 this->map[y][x] = ALIVE;
@@ -79,9 +81,16 @@ void Caves::initArray(int mapWidth, int mapHeight, int aliveProb) {
     }
 }
 
-bool** Caves::generateCaves(int generations) {
+void Caves::generateCaves(int generations) {
     for (int gen = 0; gen < generations; gen++) {
         this->cellularAutomata();
     }
-    return this->map;
+    this->switchStates();
+}
+
+bool Caves::getCell(int x, int y) {
+    /*
+        Get cell data with given coordinates.
+    */
+    return this->map[y][x];
 }
