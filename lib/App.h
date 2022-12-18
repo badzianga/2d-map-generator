@@ -40,6 +40,7 @@ class App {
         float dirtProb;
         int** map;
         float panelPosX;
+        int groundLevel;
         sf::Vector2i scroll;
         bool toggleGrid;
         std::map<std::string, bool> inputs;
@@ -58,6 +59,7 @@ class App {
         Textbox* textboxGenerations;
         Textbox* textboxDirtDensity;
         Textbox* textboxDirtProb;
+        Textbox* textboxGroundLevel;
         Caves* caves;
 
         // ----- PRIVATE FUNCTIONS -----//
@@ -66,7 +68,7 @@ class App {
         void initFont();
         void initSprites();
         void initPanel();
-        void initMap(int width, int height, float smoothness, int heightDiff);
+        void initMap();
         void initCaves();
 
         void drawMap();

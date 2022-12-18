@@ -9,6 +9,7 @@
 #define STONE 3
 #define BEDROCK 4
 #define DANDELION 5
+#define BG_STONE 6
 
 // ----- PRIVATE FUNCTIONS ----- //
 void App::initVariables() {
@@ -27,6 +28,7 @@ void App::initVariables() {
     this->textboxGenerations = nullptr;
     this->textboxDirtDensity = nullptr;
     this->textboxDirtProb = nullptr;
+    this->textboxGroundLevel = nullptr;
     this->caves = nullptr;
 
     this->mapWidth = 80;
@@ -35,6 +37,7 @@ void App::initVariables() {
     this->heightDiff = 6;
     this->dirtProb = 0.4;
     this->dirtDensity = 0.1;
+    this->groundLevel = 64;
 
     this->scroll.x = 0;
     this->scroll.y = 0;
@@ -79,7 +82,7 @@ void App::initSprites() {
         Load all textures from the folder and create sprites. If pre-defined sprites
         are not found, the app is terminated.
     */
-    std::string images[] = {"dirt", "grass", "stone", "bedrock", "dandelion"};
+    std::string images[] = {"dirt", "grass", "stone", "bedrock", "dandelion", "bgstone"};
     int index = 1;
 
     // load textures from directory and save them as sprites in map
@@ -112,7 +115,7 @@ void App::initPanel() {
     label.setOutlineColor(sf::Color::Black);
     label.setOutlineThickness(1.f);
 
-    std::string texts[] = {"Map width:", "Map height:", "Smoothness:", "Height diff:", "Alive prob:", "Generations:", "Dirt density:", "Dirt prob:"};
+    std::string texts[] = {"Map width:", "Map height:", "Smoothness:", "Height diff:", "Alive prob:", "Generations:", "Dirt density:", "Dirt prob:", "Ground level:"};
     int i = 0;
     for (std::string text : texts) {
         label.setString(text);
@@ -129,7 +132,7 @@ void App::initPanel() {
     this->textboxMapWidth->setPosition(sf::Vector2f(panelPosX + 200.f, PADDING));
 
     // map height
-    this->textboxMapHeight = new Textbox(sf::Vector2f(96, 24), 24, false, 64);
+    this->textboxMapHeight = new Textbox(sf::Vector2f(96, 24), 24, false, 96);
     this->textboxMapHeight->setFont(this->font);
     this->textboxMapHeight->setLimit(true, 4);
     this->textboxMapHeight->setPosition(sf::Vector2f(panelPosX + 200.f, 24 + 2 * PADDING));
@@ -170,6 +173,12 @@ void App::initPanel() {
     this->textboxDirtProb->setLimit(true, 2);
     this->textboxDirtProb->setPosition(sf::Vector2f(panelPosX + 200.f, 168 + 8 * PADDING));
 
+    // ground level
+    this->textboxGroundLevel = new Textbox(sf::Vector2f(96, 24), 24, false, 64);
+    this->textboxGroundLevel->setFont(this->font);
+    this->textboxGroundLevel->setLimit(true, 4);
+    this->textboxGroundLevel->setPosition(sf::Vector2f(panelPosX + 200.f, 192 + 9 * PADDING));
+
     // configure buttons
     this->buttonGenerate = new Button({144, 32}, "Generate", 24, {0.f, -6.f});
     this->buttonGenerate->setFont(this->font);
@@ -180,16 +189,11 @@ void App::initPanel() {
     this->buttonExport->setPosition({panelPosX + 12.f * PADDING, float(this->videoMode.height - 3 * PADDING)});
 }
 
-void App::initMap(int width, int height, float smoothness, int heightDiff) {
+void App::initMap() {
     /*
         Initialize map - 2D array filled with zeros.
         Size of the array is declared by user.
     */
-    this->mapWidth = width;
-    this->mapHeight = height;
-    this->smoothness = smoothness;
-    this->heightDiff = heightDiff;
-
     this->map = new int*[this->mapHeight];
     for (int i = 0; i < this->mapHeight; i++) {
         this->map[i] = new int[this->mapWidth];
@@ -227,7 +231,7 @@ void App::drawMap() {
     /*
         Iterate through array and draw correspond tiles on the window.
     */
-    int counter = 0;
+    // int counter = 0;
     // for (int y = 0; y < this->mapHeight; y++) {
     //     for (int x = 0; x < this->mapWidth; x++) {
     //         if (this->map[y][x] != EMPTY) {
@@ -241,13 +245,17 @@ void App::drawMap() {
     int renderLimitY = ((this->scroll.y + this->videoMode.height) / TILE_SIZE) + this->scroll.y / SCROLL_SPEED % 2;
     // std::cout << "x limits: " << this->scroll.x / TILE_SIZE << ' ' << renderLimitX << '\n';
     // std::cout << "y limits: " << this->scroll.y / TILE_SIZE << ' ' << renderLimitY << "\n\n";
+    int ground = this->mapHeight - this->groundLevel;
 
     for (int y = this->scroll.y / TILE_SIZE; y < renderLimitY; y++) {
         for (int x = this->scroll.x / TILE_SIZE; x < renderLimitX; x++) {
             if (this->map[y][x] != EMPTY) {
                 this->blocks[map[y][x]].setPosition(x * TILE_SIZE - this->scroll.x, y * TILE_SIZE - this->scroll.y);
                 this->window->draw(this->blocks[map[y][x]]);
-                counter++;
+                // counter++;
+            } else if (y > ground) {
+                this->blocks[BG_STONE].setPosition(x * TILE_SIZE - this->scroll.x, y * TILE_SIZE - this->scroll.y);
+                this->window->draw(this->blocks[BG_STONE]);
             }
         }
     }
@@ -274,6 +282,7 @@ void App::drawPanel() {
     this->textboxGenerations->drawTo(this->window);
     this->textboxDirtDensity->drawTo(this->window);
     this->textboxDirtProb->drawTo(this->window);
+    this->textboxGroundLevel->drawTo(this->window);
     this->buttonGenerate->drawTo(this->window);
     this->buttonExport->drawTo(this->window);
 }
@@ -285,16 +294,18 @@ void App::generateTerrain() {
     const siv::PerlinNoise::seed_type seed = rand() % 10 * time(NULL);
     const siv::PerlinNoise perlin{seed};
 
+    int ground = this->mapHeight - this->groundLevel;
+
     for (int y = 0; y < this->mapHeight; y++) {
         for (int x = 0; x < this->mapWidth; x++) {
-            const double height = int(perlin.noise1D((x * this->smoothness)) * this->heightDiff);
+            const double height = int(perlin.noise1D_01((x * this->smoothness)) * this->heightDiff);
             if (y > this->mapHeight - 6) {  // bedrock and stone
                 if (rand() % 10 >= (2 * (mapHeight - y - 1))) {
                     map[y][x] = BEDROCK;
                 } else {
                     map[y][x] = STONE;
                 }
-            } else if (y > 12 - height) { // stone
+            } else if (y > ground + 4 - height) { // stone
                 // stone and empty spaces (caves)
                 map[y][x] = this->caves->getCell(x, y) * STONE;
 
@@ -303,11 +314,11 @@ void App::generateTerrain() {
                     map[y][x] = DIRT;
                 }
                 // map[y][x] = STONE;
-            } else if (y > 8 - height) {  // dirt
+            } else if (y > ground - height) {  // dirt
                 map[y][x] = DIRT;
-            } else if (y == 8 - height) {  // grass
+            } else if (y == ground - height) {  // grass
                 map[y][x] = GRASS;
-            } else if (y == 8 - height - 1) {
+            } else if (y == ground - height - 1) {  // foliage
                 if (rand() % 10 == 0) {
                     map[y][x] = DANDELION;
                 }
@@ -363,7 +374,7 @@ App::App() {
     this->initVariables();
     this->initFont();
     this->initSprites();
-    this->initMap(this->mapWidth, this->mapHeight, this->smoothness, this->heightDiff);
+    this->initMap();
     this->initCaves();
     this->initWindow();
     this->initPanel();
@@ -384,6 +395,7 @@ App::~App() {
     delete this->textboxGenerations;
     delete this->textboxDirtDensity;
     delete this->textboxDirtProb;
+    delete this->textboxGroundLevel;
 
     delete this->buttonGenerate;
     delete this->buttonExport;
@@ -465,6 +477,7 @@ void App::pollEvents() {
             this->textboxGenerations->typedOn(this->event);
             this->textboxDirtDensity->typedOn(this->event);
             this->textboxDirtProb->typedOn(this->event);
+            this->textboxGroundLevel->typedOn(this->event);
         }
 
         if (this->event.type == sf::Event::MouseMoved) {
@@ -521,30 +534,36 @@ void App::pollEvents() {
             } else {
                 this->textboxDirtProb->setSelected(false);
             }
+            if (this->textboxGroundLevel->isMouseOver(this->window)) {
+                this->textboxGroundLevel->setSelected(true);
+            } else {
+                this->textboxGroundLevel->setSelected(false);
+            }
 
             if (buttonExport->isMouseOver(this->window)) {
                 this->exportToCSV();
                 std::cout << "Exported data to CSV file.\n";
             }
             if (buttonGenerate->isMouseOver(this->window)) {
-                int width = std::stoi(this->textboxMapWidth->getText());
-                int height = std::stoi(this->textboxMapHeight->getText());
-                if (width <= 0 || height <= 0) {
+                this->mapWidth = std::stoi(this->textboxMapWidth->getText());
+                this->mapHeight = std::stoi(this->textboxMapHeight->getText());
+                if (this->mapWidth <= 0 || this->mapHeight <= 0) {
                     continue;
                 }
-                float smoothness = std::stof(this->textboxSmoothness->getText()) / 100.f;
-                int heightDiff = std::stoi(this->textboxHeightDiff->getText());
+                this->smoothness = std::stof(this->textboxSmoothness->getText()) / 100.f;
+                this->heightDiff = std::stoi(this->textboxHeightDiff->getText());
                 int aliveProb = std::stoi(this->textboxAliveProb->getText());
                 int generations = std::stoi(this->textboxGenerations->getText());
                 this->dirtDensity = std::stof(this->textboxDirtDensity->getText()) / 100.f;
                 this->dirtProb = std::stof(this->textboxDirtProb->getText()) / 100.f;
+                this->groundLevel = std::stoi(this->textboxGroundLevel->getText());
 
                 this->scroll.x = 0;
                 this->scroll.y = 0;
 
                 delete this->map;
-                this->initMap(width, height, smoothness, heightDiff);
-                this->caves->initArray(width, height, aliveProb);
+                this->initMap();
+                this->caves->initArray(this->mapWidth, this->mapHeight, aliveProb);
                 this->caves->generateCaves(generations);
                 this->generateTerrain();
             }
