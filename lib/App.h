@@ -36,6 +36,8 @@ class App {
         int mapHeight;
         float smoothness;
         int heightDiff;
+        float dirtDensity;
+        float dirtProb;
         int** map;
         float panelPosX;
         sf::Vector2i scroll;
@@ -54,6 +56,8 @@ class App {
         Textbox* textboxHeightDiff;
         Textbox* textboxAliveProb;
         Textbox* textboxGenerations;
+        Textbox* textboxDirtDensity;
+        Textbox* textboxDirtProb;
         Caves* caves;
 
         // ----- PRIVATE FUNCTIONS -----//

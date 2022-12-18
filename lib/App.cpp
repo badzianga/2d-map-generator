@@ -25,12 +25,16 @@ void App::initVariables() {
     this->textboxHeightDiff = nullptr;
     this->textboxAliveProb = nullptr;
     this->textboxGenerations = nullptr;
+    this->textboxDirtDensity = nullptr;
+    this->textboxDirtProb = nullptr;
     this->caves = nullptr;
 
     this->mapWidth = 80;
     this->mapHeight = 46;
     this->smoothness = 0.2;
     this->heightDiff = 6;
+    this->dirtProb = 0.4;
+    this->dirtDensity = 0.1;
 
     this->scroll.x = 0;
     this->scroll.y = 0;
@@ -108,7 +112,7 @@ void App::initPanel() {
     label.setOutlineColor(sf::Color::Black);
     label.setOutlineThickness(1.f);
 
-    std::string texts[] = {"Map width:", "Map height:", "Smoothness:", "Height diff:", "Alive prob:", "Generations:"};
+    std::string texts[] = {"Map width:", "Map height:", "Smoothness:", "Height diff:", "Alive prob:", "Generations:", "Dirt density:", "Dirt prob:"};
     int i = 0;
     for (std::string text : texts) {
         label.setString(text);
@@ -153,6 +157,18 @@ void App::initPanel() {
     this->textboxGenerations->setFont(this->font);
     this->textboxGenerations->setLimit(true, 2);
     this->textboxGenerations->setPosition(sf::Vector2f(panelPosX + 200.f, 120 + 6 * PADDING));
+
+    // dirt density
+    this->textboxDirtDensity = new Textbox(sf::Vector2f(96, 24), 24, false, 10);
+    this->textboxDirtDensity->setFont(this->font);
+    this->textboxDirtDensity->setLimit(true, 3);
+    this->textboxDirtDensity->setPosition(sf::Vector2f(panelPosX + 200.f, 144 + 7 * PADDING));
+
+    // dirt prob
+    this->textboxDirtProb = new Textbox(sf::Vector2f(96, 24), 24, false, 40);
+    this->textboxDirtProb->setFont(this->font);
+    this->textboxDirtProb->setLimit(true, 2);
+    this->textboxDirtProb->setPosition(sf::Vector2f(panelPosX + 200.f, 168 + 8 * PADDING));
 
     // configure buttons
     this->buttonGenerate = new Button({144, 32}, "Generate", 24, {0.f, -6.f});
@@ -256,6 +272,8 @@ void App::drawPanel() {
     this->textboxHeightDiff->drawTo(this->window);
     this->textboxAliveProb->drawTo(this->window);
     this->textboxGenerations->drawTo(this->window);
+    this->textboxDirtDensity->drawTo(this->window);
+    this->textboxDirtProb->drawTo(this->window);
     this->buttonGenerate->drawTo(this->window);
     this->buttonExport->drawTo(this->window);
 }
@@ -277,7 +295,13 @@ void App::generateTerrain() {
                     map[y][x] = STONE;
                 }
             } else if (y > 12 - height) { // stone
+                // stone and empty spaces (caves)
                 map[y][x] = this->caves->getCell(x, y) * STONE;
+
+                // dirt patches
+                if (perlin.noise2D_01(x * this->dirtDensity, y * this->dirtDensity) < this->dirtProb && map[y][x] != 0) {
+                    map[y][x] = DIRT;
+                }
                 // map[y][x] = STONE;
             } else if (y > 8 - height) {  // dirt
                 map[y][x] = DIRT;
@@ -358,6 +382,8 @@ App::~App() {
     delete this->textboxHeightDiff;
     delete this->textboxAliveProb;
     delete this->textboxGenerations;
+    delete this->textboxDirtDensity;
+    delete this->textboxDirtProb;
 
     delete this->buttonGenerate;
     delete this->buttonExport;
@@ -437,6 +463,8 @@ void App::pollEvents() {
             this->textboxHeightDiff->typedOn(this->event);
             this->textboxAliveProb->typedOn(this->event);
             this->textboxGenerations->typedOn(this->event);
+            this->textboxDirtDensity->typedOn(this->event);
+            this->textboxDirtProb->typedOn(this->event);
         }
 
         if (this->event.type == sf::Event::MouseMoved) {
@@ -483,6 +511,16 @@ void App::pollEvents() {
             } else {
                 this->textboxGenerations->setSelected(false);
             }
+            if (this->textboxDirtDensity->isMouseOver(this->window)) {
+                this->textboxDirtDensity->setSelected(true);
+            } else {
+                this->textboxDirtDensity->setSelected(false);
+            }
+            if (this->textboxDirtProb->isMouseOver(this->window)) {
+                this->textboxDirtProb->setSelected(true);
+            } else {
+                this->textboxDirtProb->setSelected(false);
+            }
 
             if (buttonExport->isMouseOver(this->window)) {
                 this->exportToCSV();
@@ -498,6 +536,8 @@ void App::pollEvents() {
                 int heightDiff = std::stoi(this->textboxHeightDiff->getText());
                 int aliveProb = std::stoi(this->textboxAliveProb->getText());
                 int generations = std::stoi(this->textboxGenerations->getText());
+                this->dirtDensity = std::stof(this->textboxDirtDensity->getText()) / 100.f;
+                this->dirtProb = std::stof(this->textboxDirtProb->getText()) / 100.f;
 
                 this->scroll.x = 0;
                 this->scroll.y = 0;
