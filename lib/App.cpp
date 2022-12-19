@@ -29,6 +29,7 @@ void App::initVariables() {
     this->textboxDirtDensity = nullptr;
     this->textboxDirtProb = nullptr;
     this->textboxGroundLevel = nullptr;
+    this->textboxFloodCaveSize = nullptr;
     this->caves = nullptr;
 
     this->mapWidth = 80;
@@ -38,11 +39,13 @@ void App::initVariables() {
     this->dirtProb = 0.4;
     this->dirtDensity = 0.1;
     this->groundLevel = 64;
+    this->floodFillCounter = 0;
+    this->floodCaveSize = 200;
 
     this->scroll.x = 0;
     this->scroll.y = 0;
 
-    this->toggleGrid = true;
+    this->toggleGrid = false;
 
     this->inputs["up"] = false;
     this->inputs["down"] = false;
@@ -115,7 +118,7 @@ void App::initPanel() {
     label.setOutlineColor(sf::Color::Black);
     label.setOutlineThickness(1.f);
 
-    std::string texts[] = {"Map width:", "Map height:", "Smoothness:", "Height diff:", "Alive prob:", "Generations:", "Dirt density:", "Dirt prob:", "Ground level:"};
+    std::string texts[] = {"Map width:", "Map height:", "Smoothness:", "Height diff:", "Alive prob:", "Generations:", "Dirt density:", "Dirt prob:", "Ground level:", "Flood size:"};
     int i = 0;
     for (std::string text : texts) {
         label.setString(text);
@@ -178,6 +181,12 @@ void App::initPanel() {
     this->textboxGroundLevel->setFont(this->font);
     this->textboxGroundLevel->setLimit(true, 4);
     this->textboxGroundLevel->setPosition(sf::Vector2f(panelPosX + 200.f, 192 + 9 * PADDING));
+
+    // flood cave size
+    this->textboxFloodCaveSize = new Textbox(sf::Vector2f(96, 24), 24, false, 200);
+    this->textboxFloodCaveSize->setFont(this->font);
+    this->textboxFloodCaveSize->setLimit(true, 4);
+    this->textboxFloodCaveSize->setPosition(sf::Vector2f(panelPosX + 200.f, 216 + 10 * PADDING));
 
     // configure buttons
     this->buttonGenerate = new Button({144, 32}, "Generate", 24, {0.f, -6.f});
@@ -245,7 +254,7 @@ void App::drawMap() {
     int renderLimitY = ((this->scroll.y + this->videoMode.height) / TILE_SIZE) + this->scroll.y / SCROLL_SPEED % 2;
     // std::cout << "x limits: " << this->scroll.x / TILE_SIZE << ' ' << renderLimitX << '\n';
     // std::cout << "y limits: " << this->scroll.y / TILE_SIZE << ' ' << renderLimitY << "\n\n";
-    int ground = this->mapHeight - this->groundLevel;
+    // int ground = this->mapHeight - this->groundLevel;
 
     for (int y = this->scroll.y / TILE_SIZE; y < renderLimitY; y++) {
         for (int x = this->scroll.x / TILE_SIZE; x < renderLimitX; x++) {
@@ -253,10 +262,11 @@ void App::drawMap() {
                 this->blocks[map[y][x]].setPosition(x * TILE_SIZE - this->scroll.x, y * TILE_SIZE - this->scroll.y);
                 this->window->draw(this->blocks[map[y][x]]);
                 // counter++;
-            } else if (y > ground) {
-                this->blocks[BG_STONE].setPosition(x * TILE_SIZE - this->scroll.x, y * TILE_SIZE - this->scroll.y);
-                this->window->draw(this->blocks[BG_STONE]);
             }
+            // } else if (y > ground) {
+            //     this->blocks[BG_STONE].setPosition(x * TILE_SIZE - this->scroll.x, y * TILE_SIZE - this->scroll.y);
+            //     this->window->draw(this->blocks[BG_STONE]);
+            // }
         }
     }
     // std::cout << "Tiles drawn: " << counter << '\n';
@@ -283,6 +293,7 @@ void App::drawPanel() {
     this->textboxDirtDensity->drawTo(this->window);
     this->textboxDirtProb->drawTo(this->window);
     this->textboxGroundLevel->drawTo(this->window);
+    this->textboxFloodCaveSize->drawTo(this->window);
     this->buttonGenerate->drawTo(this->window);
     this->buttonExport->drawTo(this->window);
 }
@@ -325,6 +336,65 @@ void App::generateTerrain() {
             }
         }
     }
+
+    this->generateCaveEntrances();
+}
+
+void App::generateCaveEntrances() {
+    /*
+        Generate cave entrance by removing grass/dirt from areas closest to big cave.
+    */
+    int y;
+    int x = 0;
+    while (x < this->mapWidth) {
+        y = 0;
+        while (this->map[y][x] != GRASS) y++;  // find ground level
+
+        // check if space 5 blocks below grass block is empty
+        if (this->map[y + 5][x] == EMPTY) {
+            // count size of empty space below ground
+            this->floodFillCounter = 0;
+            this->floodFill(x, y + 5, EMPTY, -1);
+            // if it's big enough, leave it as empty space
+            if (this->floodFillCounter >= this->floodCaveSize) {
+                this->floodFillCounter = 0;
+                this->floodFill(x, y + 5, -1, EMPTY);
+            } else {  // if it's not big enough, fill it with stone
+                this->floodFillCounter = 0;
+                this->floodFill(x, y + 5, -1, STONE);
+            }
+        }
+        x++;  // go to the next block
+    }
+
+    // do it again, but now only create entrance
+    x = 0;
+    int toDwell = 3 + rand() % 4;
+    while (x < this->mapWidth && toDwell > 0) {
+        y = 0;
+        while(this->map[y][x] != GRASS) y++;
+        if (this->map[y + 5][x] == EMPTY) {
+            for (int i = -1; i < 6; i++) {
+                this->map[y + i][x] = EMPTY;
+            }
+            toDwell--;
+        }
+        x++;
+    }
+}
+
+void App::floodFill(int x, int y, int toCheck, int filler) {
+    if (x <= 0 || x >= this->mapWidth || y <= 0 || y >= this->mapHeight || this->map[y][x] != toCheck) {
+        return;
+    }
+    this->floodFillCounter++;
+    this->map[y][x] = filler;
+
+    this->floodFill(x - 1, y, toCheck, filler);
+    this->floodFill(x + 1, y, toCheck, filler);
+    this->floodFill(x, y - 1, toCheck, filler);
+    this->floodFill(x, y + 1, toCheck, filler);
+
 }
 
 void App::exportToCSV() {
@@ -396,6 +466,7 @@ App::~App() {
     delete this->textboxDirtDensity;
     delete this->textboxDirtProb;
     delete this->textboxGroundLevel;
+    delete this->textboxFloodCaveSize;
 
     delete this->buttonGenerate;
     delete this->buttonExport;
@@ -478,6 +549,7 @@ void App::pollEvents() {
             this->textboxDirtDensity->typedOn(this->event);
             this->textboxDirtProb->typedOn(this->event);
             this->textboxGroundLevel->typedOn(this->event);
+            this->textboxFloodCaveSize->typedOn(this->event);
         }
 
         if (this->event.type == sf::Event::MouseMoved) {
@@ -539,6 +611,11 @@ void App::pollEvents() {
             } else {
                 this->textboxGroundLevel->setSelected(false);
             }
+            if (this->textboxFloodCaveSize->isMouseOver(this->window)) {
+                this->textboxFloodCaveSize->setSelected(true);
+            } else {
+                this->textboxFloodCaveSize->setSelected(false);
+            }
 
             if (buttonExport->isMouseOver(this->window)) {
                 this->exportToCSV();
@@ -557,6 +634,7 @@ void App::pollEvents() {
                 this->dirtDensity = std::stof(this->textboxDirtDensity->getText()) / 100.f;
                 this->dirtProb = std::stof(this->textboxDirtProb->getText()) / 100.f;
                 this->groundLevel = std::stoi(this->textboxGroundLevel->getText());
+                this->floodCaveSize = std::stoi(this->textboxFloodCaveSize->getText());
 
                 this->scroll.x = 0;
                 this->scroll.y = 0;

@@ -60,7 +60,11 @@ class App {
         Textbox* textboxDirtDensity;
         Textbox* textboxDirtProb;
         Textbox* textboxGroundLevel;
+        Textbox* textboxFloodCaveSize;
         Caves* caves;
+
+        int floodFillCounter;
+        int floodCaveSize;
 
         // ----- PRIVATE FUNCTIONS -----//
         void initVariables();
@@ -70,11 +74,12 @@ class App {
         void initPanel();
         void initMap();
         void initCaves();
-
         void drawMap();
         void drawGrid();
         void drawPanel();
         void generateTerrain();
+        void generateCaveEntrances();
+        void floodFill(int x, int y, int toCheck, int filler);
         void exportToCSV();
 
     public:
