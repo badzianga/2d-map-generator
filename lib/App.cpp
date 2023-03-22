@@ -62,7 +62,7 @@ void App::initWindow() {
 
     this->windowStyle = sf::Style::Titlebar | sf::Style::Close;
 
-    this->window = new sf::RenderWindow(this->videoMode, "Mapeczka Tomeczka", this->windowStyle);
+    this->window = new sf::RenderWindow(this->videoMode, "2D Map Generator", this->windowStyle);
     this->window->setFramerateLimit(this->FPS);
 
     sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
